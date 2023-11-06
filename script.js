@@ -9,7 +9,15 @@ if (!gl) {
 const vertexShaderSrc = `
     attribute vec2 position;
     uniform mat3 transformMat;
+    uniform float time;
     void main() {
+        float angle = time * 3.1415926535897932384626433832795;
+        mat3 rotationMat = mat3(
+            cos(angle), sin(angle), 0.0,
+            -sin(angle), cos(angle), 0.0,
+            0.0, 0.0, 1.0
+        );
+        mat3 transformMat = rotationMat * transformMat;
         vec3 pos3D = transformMat  * vec3(position, 1.0);
         gl_Position = vec4(pos3D, 1.0);
     }
@@ -275,6 +283,9 @@ document.addEventListener('keydown', function(event) {
             ];
             rotationAngle = 0;
             break;
+        case '2': // Two key
+            drawScene();
+            break;
     }
 
     // Create a rotation matrix for the new rotation angle
@@ -299,6 +310,26 @@ document.addEventListener('keydown', function(event) {
 });
 
 
+const timeLoc = gl.getUniformLocation(program, 'time');
+function drawScene() {
+    // Update the time uniform
+    let time = performance.now() / 1000.0;
+    gl.uniform1f(timeLoc, time);
 
+    // Clear and draw
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // Draw the blue snowflake
+    gl.uniformMatrix3fv(transformMatLoc, true, transformMat1);
+    gl.uniform3fv(colorLoc, colorBlue);
+    gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
+
+    // Draw the white snowflake
+    gl.uniformMatrix3fv(transformMatLoc, true, transformMat2);
+    gl.uniform3fv(colorLoc, colorWhite);
+    gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
+
+    requestAnimationFrame(drawScene);
+}
 
 
