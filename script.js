@@ -266,6 +266,15 @@ document.addEventListener('keydown', function(event) {
         case '-': // Minus key
             rotationAngle -= 1;
             break;
+        case '1': // One key
+            // Reset the transformation and rotation matrices to their initial state
+            translateMatrix = [
+                1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0
+            ];
+            rotationAngle = 0;
+            break;
     }
 
     // Create a rotation matrix for the new rotation angle
