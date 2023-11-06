@@ -196,3 +196,48 @@ let transformMat2 = mul(translateMatrix2, mul(scaleMatrix2, translateMatrix1));
 gl.uniformMatrix3fv(transformMatLoc, true, transformMat2);
 gl.uniform3fv(colorLoc, colorWhite);
 gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
+
+
+let translateMatrix = [
+    1.0, 0.0, 0.0,
+    0.0, 1.0, 0.0,
+    0.0, 0.0, 1.0
+];
+
+document.addEventListener('keydown', function(event) {
+    switch(event.keyCode) {
+        case 37: // Left arrow
+            translateMatrix[2] -= 0.1;
+            break;
+        case 38: // Up arrow
+            translateMatrix[5] += 0.1;
+            break;
+        case 39: // Right arrow
+            translateMatrix[2] += 0.1;
+            break;
+        case 40: // Down arrow
+            translateMatrix[5] -= 0.1;
+            break;
+    }
+
+    // Recalculate the transformation matrices
+    transformMat1 = mul(translateMatrix, (mul(translateMatrix2, mul(scaleMatrix1, translateMatrix1))));
+    transformMat2 = mul(translateMatrix, (mul(translateMatrix2, mul(scaleMatrix2, translateMatrix1))));
+
+    // Clear and redraw the scene
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // Draw the blue snowflake
+    gl.uniformMatrix3fv(transformMatLoc, true, transformMat1);
+    gl.uniform3fv(colorLoc, colorBlue);
+    gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
+
+    // Draw the white snowflake
+    gl.uniformMatrix3fv(transformMatLoc, true, transformMat2);
+    gl.uniform3fv(colorLoc, colorWhite);
+    gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
+});
+
+
+
+
