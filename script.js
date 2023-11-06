@@ -11,7 +11,7 @@ const vertexShaderSrc = `
     uniform mat3 transformMat;
     uniform float time;
     void main() {
-        float angle = time * 3.1415926535897932384626433832795;
+        float angle = sin(time) * 80.0 * 3.1415926535897932384626433832795 / 180.0;
         mat3 rotationMat = mat3(
             cos(angle), sin(angle), 0.0,
             -sin(angle), cos(angle), 0.0,
