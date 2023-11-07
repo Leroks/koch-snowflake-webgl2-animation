@@ -295,6 +295,14 @@ document.addEventListener('keydown', function(event) {
     transformMat1 = mul(translateMatrix, (mul(translateMatrix2, mul(rotationMatrix, mul(scaleMatrix1, translateMatrix1)))));
     transformMat2 = mul(translateMatrix, (mul(translateMatrix2, mul(rotationMatrix, mul(scaleMatrix2, translateMatrix1)))));
 
+    switch(event.key) {
+        case '2': // Two key
+            drawScene();
+            transformMat1 = mul(translateMatrix, (mul(translateMatrix2, mul(translateMatrix1, mul(scaleMatrix1, translateMatrix1)))));
+            transformMat2 = mul(translateMatrix, (mul(translateMatrix2, mul(translateMatrix1, mul(scaleMatrix2, translateMatrix1)))));
+            break;
+    }
+
     // Clear and redraw the scene
     gl.clear(gl.COLOR_BUFFER_BIT);
 
