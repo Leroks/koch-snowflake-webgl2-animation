@@ -10,6 +10,7 @@ const vertexShaderSrc = `
     attribute vec2 position;
     uniform mat3 transformMat;
     uniform float time;
+    uniform int shouldSwing;
     void main() {
         float angle = sin(time) * 80.0 * 3.1415926535897932384626433832795 / 180.0;
         mat3 rotationMat = mat3(
@@ -17,8 +18,12 @@ const vertexShaderSrc = `
             -sin(angle), cos(angle), 0.0,
             0.0, 0.0, 1.0
         );
-        mat3 transformMat = rotationMat * transformMat;
-        vec3 pos3D = transformMat  * vec3(position, 1.0);
+        
+        mat3 tr = transformMat;
+        if(shouldSwing == 1)
+            tr = rotationMat * transformMat;
+
+        vec3 pos3D = tr  * vec3(position, 1.0);
         gl_Position = vec4(pos3D, 1.0);
     }
 `;
@@ -136,6 +141,16 @@ function addTriangles(point1, point2, verticesOut, iteration, firstTime)
     }
 }
 
+// Function to create a rotation matrix in DEGREES
+function createRotationMatrix(angleInDegrees) {
+    var angleInRadians = angleInDegrees * Math.PI / 180.0;
+
+    return [
+        Math.cos(angleInRadians), Math.sin(angleInRadians), 0,
+        -Math.sin(angleInRadians), Math.cos(angleInRadians), 0,
+        0, 0, 1
+    ];
+}
 
 vertices = []
 let point1 = { x: 0.0, y: 0.5 * Math.sqrt(3) - 0.5};
@@ -160,10 +175,6 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verticesFinal), gl.STATIC_DRAW);
 const position = gl.getAttribLocation(program, 'position');
 gl.enableVertexAttribArray(position);
 gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-
-// Clear and draw
-gl.clearColor(1.0, 1.0, 1.0, 1.0);
-gl.clear(gl.COLOR_BUFFER_BIT);
 
 let translateMatrix1 = [
     1.0, 0.0, 0.0,
@@ -192,10 +203,12 @@ let scaleMatrix2 = [
 colorBlue = [0.0, 0.0, 0.8];
 colorWhite = [1.0, 1.0, 1.0];
 
-let transformMat1 = mul(translateMatrix2, mul(scaleMatrix1, translateMatrix1));
 const transformMatLoc = gl.getUniformLocation(program, 'transformMat');
 const colorLoc = gl.getUniformLocation(program, 'color');
+const timeLoc = gl.getUniformLocation(program, 'time');
+const swingLoc = gl.getUniformLocation(program, 'shouldSwing');
 
+let transformMat1 = mul(translateMatrix2, mul(scaleMatrix1, translateMatrix1));
 gl.uniformMatrix3fv(transformMatLoc, true, transformMat1);
 gl.uniform3fv(colorLoc, colorBlue);
 gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
@@ -215,117 +228,28 @@ let translateMatrix = [
     0.0, 0.0, 1.0
 ];
 
-document.addEventListener('keydown', function(event) {
-    switch(event.keyCode) {
-        case 37: // Left arrow
-            translateMatrix[2] -= 0.1;
-            break;
-        case 38: // Up arrow
-            translateMatrix[5] += 0.1;
-            break;
-        case 39: // Right arrow
-            translateMatrix[2] += 0.1;
-            break;
-        case 40: // Down arrow
-            translateMatrix[5] -= 0.1;
-            break;
-    }
-
-    // Recalculate the transformation matrices
-    transformMat1 = mul(translateMatrix, (mul(translateMatrix2, mul(scaleMatrix1, translateMatrix1))));
-    transformMat2 = mul(translateMatrix, (mul(translateMatrix2, mul(scaleMatrix2, translateMatrix1))));
-
-    // Clear and redraw the scene
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    // Draw the blue snowflake
-    gl.uniformMatrix3fv(transformMatLoc, true, transformMat1);
-    gl.uniform3fv(colorLoc, colorBlue);
-    gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
-
-    // Draw the white snowflake
-    gl.uniformMatrix3fv(transformMatLoc, true, transformMat2);
-    gl.uniform3fv(colorLoc, colorWhite);
-    gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
-});
-
-
-//ROTATION OF THE SNOWFLAKES
-//-----------------------------------------------------------------------------------------------
-
-// Function to create a rotation matrix in DEGREES
-function createRotationMatrix(angleInDegrees) {
-    var angleInRadians = angleInDegrees * Math.PI / 180.0;
-
-    return [
-        Math.cos(angleInRadians), Math.sin(angleInRadians), 0,
-        -Math.sin(angleInRadians), Math.cos(angleInRadians), 0,
-        0, 0, 1
-    ];
-}
-
 let rotationAngle = 0;
+let shouldSwing = 0;
 
-document.addEventListener('keydown', function(event) {
-    switch(event.key) {
-        case '+': // Plus key
-            rotationAngle += 1;
-            break;
-        case '-': // Minus key
-            rotationAngle -= 1;
-            break;
-        case '1': // One key
-            // Reset the transformation and rotation matrices to their initial state
-            translateMatrix = [
-                1.0, 0.0, 0.0,
-                0.0, 1.0, 0.0,
-                0.0, 0.0, 1.0
-            ];
-            rotationAngle = 0;
-            break;
-        case '2': // Two key
-            drawScene();
-            break;
-    }
+//DRAW LOOP
+drawScene();
+function drawScene()
+{
+    // Update the time uniform
+    let time = performance.now() / 1000.0;
+    gl.uniform1f(timeLoc, time);
+    gl.uniform1i(swingLoc, shouldSwing);
+
+    // Clear and draw
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
     // Create a rotation matrix for the new rotation angle
     let rotationMatrix = createRotationMatrix(rotationAngle);
 
     // Recalculate the transformation matrices
-    transformMat1 = mul(translateMatrix, (mul(translateMatrix2, mul(rotationMatrix, mul(scaleMatrix1, translateMatrix1)))));
-    transformMat2 = mul(translateMatrix, (mul(translateMatrix2, mul(rotationMatrix, mul(scaleMatrix2, translateMatrix1)))));
-
-    switch(event.key) {
-        case '2': // Two key
-            drawScene();
-            transformMat1 = mul(translateMatrix, (mul(translateMatrix2, mul(translateMatrix1, mul(scaleMatrix1, translateMatrix1)))));
-            transformMat2 = mul(translateMatrix, (mul(translateMatrix2, mul(translateMatrix1, mul(scaleMatrix2, translateMatrix1)))));
-            break;
-    }
-
-    // Clear and redraw the scene
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    // Draw the blue snowflake
-    gl.uniformMatrix3fv(transformMatLoc, true, transformMat1);
-    gl.uniform3fv(colorLoc, colorBlue);
-    gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
-
-    // Draw the white snowflake
-    gl.uniformMatrix3fv(transformMatLoc, true, transformMat2);
-    gl.uniform3fv(colorLoc, colorWhite);
-    gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
-});
-
-
-const timeLoc = gl.getUniformLocation(program, 'time');
-function drawScene() {
-    // Update the time uniform
-    let time = performance.now() / 1000.0;
-    gl.uniform1f(timeLoc, time);
-
-    // Clear and draw
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    transformMat1 = mul(translateMatrix, (mul(translateMatrix2, mul(scaleMatrix1, translateMatrix1))));
+    transformMat2 = mul(translateMatrix, (mul(translateMatrix2, mul(scaleMatrix2, translateMatrix1))));
 
     // Draw the blue snowflake
     gl.uniformMatrix3fv(transformMatLoc, true, transformMat1);
@@ -341,3 +265,47 @@ function drawScene() {
 }
 
 
+//KEY CALLBACK
+document.addEventListener('keydown', function(event)
+{
+    switch(event.key)
+    {
+        case "ArrowLeft":
+            translateMatrix[2] -= 0.1;
+            break;
+
+        case "ArrowUp":
+            translateMatrix[5] += 0.1;
+            break;
+
+        case "ArrowRight":
+            translateMatrix[2] += 0.1;
+            break;
+
+        case "ArrowDown":
+            translateMatrix[5] -= 0.1;
+            break;
+
+        case '+': // Plus key
+            rotationAngle += 1;
+            break;
+
+        case '-': // Minus key
+            rotationAngle -= 1;
+            break;
+
+        case '1': // One key
+            // Reset the transformation and rotation matrices to their initial state
+            translateMatrix = [
+                1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0
+            ];
+            rotationAngle = 0;
+            break;
+
+        case '2':
+            shouldSwing = !shouldSwing;
+            break;
+    }
+});
