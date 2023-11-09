@@ -31,8 +31,13 @@ const vertexShaderSrc = `
 const fragmentShaderSrc = `
     precision mediump float;
     uniform vec3 color;
+    uniform float gradient;
+    uniform int shouldColorShift;
+    float intensity = 1.0;
     void main() {
-        gl_FragColor = vec4(color, 1.0);
+        if(shouldColorShift == 1)
+            intensity = (sin(gradient) + 1.0)/2.0;
+        gl_FragColor = vec4(color * intensity, 1.0);
     }
 `;
 
@@ -207,6 +212,8 @@ const transformMatLoc = gl.getUniformLocation(program, 'transformMat');
 const colorLoc = gl.getUniformLocation(program, 'color');
 const timeLoc = gl.getUniformLocation(program, 'time');
 const swingLoc = gl.getUniformLocation(program, 'shouldSwing');
+const swingLoc2 = gl.getUniformLocation(program, 'shouldColorShift');
+const gradientLoc = gl.getUniformLocation(program, 'gradient');
 
 let transformMat1 = mul(translateMatrix2, mul(scaleMatrix1, translateMatrix1));
 gl.uniformMatrix3fv(transformMatLoc, true, transformMat1);
@@ -230,6 +237,7 @@ let translateMatrix = [
 
 let rotationAngle = 0;
 let shouldSwing = 0;
+let shouldColorShift = 0;
 
 //DRAW LOOP
 drawScene();
@@ -237,8 +245,13 @@ function drawScene()
 {
     // Update the time uniform
     let time = performance.now() / 1000.0;
+    
+    //console.log((((Math.sin(time) * 80.0 * 3.1415926535897932384626433832795 / 180.0))));
+
     gl.uniform1f(timeLoc, time);
     gl.uniform1i(swingLoc, shouldSwing);
+    gl.uniform1i(swingLoc2, shouldColorShift);
+    gl.uniform1f(gradientLoc, time)
 
     // Clear and draw
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -306,6 +319,10 @@ document.addEventListener('keydown', function(event)
 
         case '2':
             shouldSwing = !shouldSwing;
+            break;
+        case '3':
+            shouldSwing = !shouldSwing;
+            shouldColorShift = !shouldColorShift;
             break;
     }
 });
