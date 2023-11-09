@@ -248,8 +248,8 @@ function drawScene()
     let rotationMatrix = createRotationMatrix(rotationAngle);
 
     // Recalculate the transformation matrices
-    transformMat1 = mul(translateMatrix, (mul(translateMatrix2, mul(scaleMatrix1, translateMatrix1))));
-    transformMat2 = mul(translateMatrix, (mul(translateMatrix2, mul(scaleMatrix2, translateMatrix1))));
+    transformMat1 = mul(translateMatrix, (mul(translateMatrix2, mul(translateMatrix1, mul(scaleMatrix1, translateMatrix1)))));
+    transformMat2 = mul(translateMatrix, (mul(translateMatrix2, mul(translateMatrix1, mul(scaleMatrix2, translateMatrix1)))));
 
     // Draw the blue snowflake
     gl.uniformMatrix3fv(transformMatLoc, true, transformMat1);
