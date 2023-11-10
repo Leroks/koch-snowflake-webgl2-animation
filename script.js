@@ -215,7 +215,7 @@ let translationMatrix = [
 ];
 
 
-const colorBlue = [0.1, 0.1, 0.8];
+const colorBlue = [0.157, 0.737, 0.8];
 const colorWhite = [1.0, 1.0, 1.0];
 let centerPos = [0.0, (point1.y + point2.y + point3.y) / 3, 0.0];
 
