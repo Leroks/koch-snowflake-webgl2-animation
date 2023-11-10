@@ -58,8 +58,13 @@ const vertexShaderSrc = `
 const fragmentShaderSrc = `
     precision mediump float;
     uniform vec3 color;
+    uniform float gradient;
+    uniform int shouldColorShift;
+    float intensity = 1.0;
     void main() {
-        gl_FragColor = vec4(color, 1.0);
+        if(shouldColorShift == 1)
+            intensity = (sin(gradient) + 1.0)/2.0;
+        gl_FragColor = vec4(color * intensity, 1.0);
     }
 `;
 
@@ -221,9 +226,12 @@ const colorLoc = gl.getUniformLocation(program, 'color');
 const timeLoc = gl.getUniformLocation(program, 'time');
 const rotationAngleLoc = gl.getUniformLocation(program, 'rotationAngle');
 const swingLoc = gl.getUniformLocation(program, 'shouldSwing');
+const colorShiftLoc = gl.getUniformLocation(program, 'shouldColorShift');
+const gradientLoc = gl.getUniformLocation(program, 'gradient');
 
 let rotationAngle = 0;
 let shouldSwing = 0;
+let shouldColorShift = 0;
 
 //DRAW LOOP
 drawScene();
@@ -234,6 +242,8 @@ function drawScene()
     gl.uniform1f(timeLoc, time);
     gl.uniform1i(swingLoc, shouldSwing);
     gl.uniform1f(rotationAngleLoc, rotationAngle);
+    gl.uniform1f(gradientLoc, time)
+    gl.uniform1i(colorShiftLoc, shouldColorShift);
 
     // Clear and draw
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -244,12 +254,14 @@ function drawScene()
     gl.uniformMatrix3fv(translationMatrixLoc, true, translationMatrix);
     gl.uniformMatrix3fv(scaleMatrixLoc, true, scaleMatrix1);
     gl.uniform3fv(colorLoc, colorBlue);
+    gl.uniform1i(colorShiftLoc, shouldColorShift);
     gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
 
     // Draw the white snowflake
     gl.uniformMatrix3fv(translationMatrixLoc, true, translationMatrix);
     gl.uniformMatrix3fv(scaleMatrixLoc, true, scaleMatrix2);
     gl.uniform3fv(colorLoc, colorWhite);
+    gl.uniform1i(colorShiftLoc, 0.0);
     gl.drawArrays(gl.TRIANGLES, 0, verticesFinal.length / 2);
 
     requestAnimationFrame(drawScene);
@@ -288,16 +300,24 @@ document.addEventListener('keydown', function(event)
 
         case '1': // One key
             // Reset the transformation and rotation matrices to their initial state
+            centerPos = [0.0, (point1.y + point2.y + point3.y) / 3, 0.0];
             translationMatrix = [
                 1.0, 0.0, 0.0,
                 0.0, 1.0, 0.0,
                 0.0, 0.0, 1.0
             ];
             rotationAngle = 0.0;
+            shouldSwing = 0.0;
+            shouldColorShift = 0.0;
             break;
 
         case '2':
-            shouldSwing = !shouldSwing;
+            shouldSwing = 1.0;
+            break;
+
+        case '3':
+            shouldSwing = 1.0;
+            shouldColorShift = 1.0;
             break;
     }
 });
